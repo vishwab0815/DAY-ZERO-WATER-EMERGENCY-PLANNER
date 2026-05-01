@@ -26,10 +26,7 @@ app = FastAPI(title="Day Zero — Water Emergency Planner", version="2.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", "http://localhost:4173",
-        "http://localhost:3000", "http://localhost:5174",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
