@@ -1,0 +1,124 @@
+{
+  "crises": [
+    {
+      "id": "chennai_2019",
+      "city": "Chennai",
+      "country": "India",
+      "year": 2019,
+      "title": "Chennai Day Zero — Reservoirs Hit Zero",
+      "population_affected": 4600000,
+      "duration_days": 120,
+      "peak_severity": "critical",
+      "reservoir_level_at_onset_pct": 8,
+      "reservoir_level_at_peak": 0,
+      "timeline": [
+        { "day": 0, "event": "All 4 major reservoirs combined at 8% capacity. Normal monsoon fails." },
+        { "day": 15, "event": "Municipal supply reduced to every 3 days" },
+        { "day": 30, "event": "Tanker prices spike 400%. Queue times 4-6 hours." },
+        { "day": 45, "event": "IT companies shut non-essential offices. Mass exodus begins." },
+        { "day": 60, "event": "Water tanker mafias emerge. Police deployed at water points." },
+        { "day": 90, "event": "Government emergency trains supply 10M liters/day (insufficient)." },
+        { "day": 120, "event": "Northeast monsoon partially restores supply. Gradual recovery." }
+      ],
+      "what_worked": [
+        "Early installation of rooftop rainwater harvesting",
+        "Grey water recycling (bath water for toilets)",
+        "Community water ATMs provided 20L/family/day at low cost",
+        "Pre-crisis storage of 2000L+ carried families 3-4 weeks"
+      ],
+      "what_failed": [
+        "Households with <7 days storage depleted in week 1",
+        "Open drums contaminated within 48 hours in 42°C heat",
+        "Borewell water unsafe (fluoride 3x safe limit in some areas)",
+        "Late rationing — families who waited too long faced illness"
+      ],
+      "avg_daily_cost_per_family_inr": 180,
+      "peak_daily_cost_per_family_inr": 850,
+      "illness_cases_reported": 28000,
+      "survival_strategies": {
+        "liters_per_day_target": 25,
+        "priority_order": ["drinking", "cooking", "handwashing", "toilet", "bathing"],
+        "key_insight": "Households that pre-rationed to 25L/day before reserves hit 50% stretched supply 3x longer."
+      }
+    },
+    {
+      "id": "cape_town_2018",
+      "city": "Cape Town",
+      "country": "South Africa",
+      "year": 2018,
+      "title": "Cape Town Day Zero — The Near Miss",
+      "population_affected": 4000000,
+      "duration_days": 400,
+      "peak_severity": "severe",
+      "reservoir_level_at_onset_pct": 30,
+      "reservoir_level_at_peak": 13.5,
+      "timeline": [
+        { "day": 0, "event": "3-year drought. Thwaites Dam system at 30%." },
+        { "day": 90, "event": "Day Zero projected: taps off for all homes. 50L/person/day limit." },
+        { "day": 180, "event": "Limit reduced to 50L/day then 87L/day as conservation kicks in." },
+        { "day": 270, "event": "City-wide behavior change saves 200M liters/day vs pre-crisis." },
+        { "day": 365, "event": "Day Zero pushed back indefinitely. Rains begin partial recovery." },
+        { "day": 400, "event": "Emergency declared over. Reservoirs at 40%." }
+      ],
+      "what_worked": [
+        "Aggressive public communication — every resident knew their daily allocation",
+        "Real-time dam level tracking (public website updated daily)",
+        "Agriculture water cuts freed up residential supply",
+        "50L/day turned out livable with discipline",
+        "Grey water reuse for flushing toilet saved 30L/person/day"
+      ],
+      "what_failed": [
+        "Wealthy neighborhoods ignored restrictions initially",
+        "Informal settlements lacked storage infrastructure",
+        "Tourism revenue collapsed — economic cost $1.2B+",
+        "Some borewell drilling created subsidence risks"
+      ],
+      "avg_daily_cost_per_family_inr": 120,
+      "peak_daily_cost_per_family_inr": 400,
+      "illness_cases_reported": 5200,
+      "survival_strategies": {
+        "liters_per_day_target": 50,
+        "priority_order": ["drinking", "cooking", "handwashing", "toilet_pour", "sponge_bath"],
+        "key_insight": "50L/day is enough to maintain dignity if you reuse grey water. The order matters: drink first, flush last."
+      }
+    },
+    {
+      "id": "sao_paulo_2015",
+      "city": "São Paulo",
+      "country": "Brazil",
+      "year": 2015,
+      "title": "São Paulo Water Crisis — 20 Million at Risk",
+      "population_affected": 20000000,
+      "duration_days": 180,
+      "peak_severity": "severe",
+      "reservoir_level_at_onset_pct": 5,
+      "reservoir_level_at_peak": 3.7,
+      "timeline": [
+        { "day": 0, "event": "Cantareira system at 5%. Worst drought in 80 years." },
+        { "day": 30, "event": "Rationing: 12 hours supply, 36 hours off. No announcement." },
+        { "day": 60, "event": "Dead pool volume accessed — technically empty." },
+        { "day": 90, "event": "Riots at water distribution points." },
+        { "day": 120, "event": "Emergency crisis declared. Army deployed." },
+        { "day": 180, "event": "Rains return. Slow recovery over 2 years." }
+      ],
+      "what_worked": [
+        "Apartment building cisterns (legal requirement since 2009) gave 5-7 days buffer",
+        "Mobile tanker apps let residents track tanker locations",
+        "Reduced shower time from 8 min to 2 min cut 60L/person/day"
+      ],
+      "what_failed": [
+        "No public advance warning — utility company hid data",
+        "Irregular supply schedule created panic hoarding",
+        "Informal water market at 10x regulated price exploited poor"
+      ],
+      "avg_daily_cost_per_family_inr": 95,
+      "peak_daily_cost_per_family_inr": 650,
+      "illness_cases_reported": 45000,
+      "survival_strategies": {
+        "liters_per_day_target": 35,
+        "priority_order": ["drinking", "cooking", "handwashing", "toilet_bucket", "no_bath"],
+        "key_insight": "Irregular supply is worse than no supply. Predictable rationing allows planning. Unpredictability causes panic and hoarding."
+      }
+    }
+  ]
+}
