@@ -245,7 +245,7 @@ function StrategyComparison() {
 
 // ── AI Insights ───────────────────────────────────────────────────────────────
 function AIInsights() {
-  const { simulation, crisisLevel, currentDayState, household } = useStore()
+  const { simulation, crisisLevel, currentDayState, household, currentDay } = useStore()
   const [insights, setInsights] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -260,7 +260,7 @@ function AIInsights() {
     try {
       const totalMembers = household?.members?.reduce((s, m) => s + m.count, 0) ?? 2
       const result = await getAIInsights({
-        days_remaining: simulation.days.length,
+        days_remaining: simulation.days.length - currentDay,
         crisis_level: crisisLevel,
         prep_score: simulation.preparedness_score,
         daily_consumption: simulation.daily_consumption ?? 50,
@@ -379,6 +379,52 @@ function AIInsights() {
   )
 }
 
+// ── Report Download Button ────────────────────────────────────────────────────
+function ReportButton() {
+  const [loading, setLoading] = useState(false)
+
+  const handleDownload = async () => {
+    setLoading(true)
+    try {
+      const resp = await fetch('http://localhost:8000/api/report')
+      if (!resp.ok) throw new Error('Report generation failed')
+      const blob = await resp.blob()
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = 'Day_Zero_WEP_Report.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('Report download failed:', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={handleDownload}
+      disabled={loading}
+      title="Download PDF Report"
+      className="px-3 py-2 rounded-xl text-xs font-heading font-semibold tracking-wide flex items-center gap-1.5 transition-all"
+      style={{
+        background: 'rgba(168,85,247,0.12)',
+        color: loading ? 'var(--color-text-muted)' : '#a855f7',
+        border: '1px solid rgba(168,85,247,0.25)',
+        cursor: loading ? 'not-allowed' : 'pointer',
+      }}
+    >
+      {loading
+        ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>⟳</motion.span>
+        : '↓'}
+      {loading ? 'Generating…' : 'PDF Report'}
+    </motion.button>
+  )
+}
+
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export function Dashboard() {
   const { simulation, crisisLevel, currentDayState, setActiveNav, currentDay } = useStore()
@@ -434,15 +480,18 @@ export function Dashboard() {
             Day {currentDayState?.day ?? 0}
           </motion.div>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.03, boxShadow: `0 0 20px ${crisisColor}30` }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setActiveNav('simulation')}
-          className="px-4 py-2 rounded-xl text-xs font-heading font-semibold tracking-wide transition-all"
-          style={{ background: `${crisisColor}18`, color: crisisColor, border: `1px solid ${crisisColor}35` }}
-        >
-          Open Simulation →
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <ReportButton />
+          <motion.button
+            whileHover={{ scale: 1.03, boxShadow: `0 0 20px ${crisisColor}30` }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setActiveNav('simulation')}
+            className="px-4 py-2 rounded-xl text-xs font-heading font-semibold tracking-wide transition-all"
+            style={{ background: `${crisisColor}18`, color: crisisColor, border: `1px solid ${crisisColor}35` }}
+          >
+            Open Simulation →
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* Main grid */}
