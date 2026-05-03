@@ -131,7 +131,7 @@ class WaterSimulator:
         self.temperature_override = temperature_override
 
     def _get_temp(self, day: int) -> float:
-        if self.temperature_override:
+        if self.temperature_override is not None:
             return self.temperature_override
         month_idx = (date.today() + timedelta(days=day)).month - 1
         temps = self.city_data.get("monthly_temp", [30] * 12)
