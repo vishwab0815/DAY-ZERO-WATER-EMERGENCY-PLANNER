@@ -128,7 +128,7 @@ function CitySearchStep({ selected, onSelect }: {
   const [searching, setSearching] = useState(false)
   const [liveTemp, setLiveTemp] = useState<number | null>(null)
   const [loadingTemp, setLoadingTemp] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // Debounced geocode search
   useEffect(() => {
@@ -572,7 +572,7 @@ export function Onboarding() {
           {step === 4 && (
             <motion.div key="habits" variants={stepVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.35 }}>
               <div className="mb-6 flex items-center justify-between">
-                <StepIndicator current={4} total={STEPS} />
+                <StepIndicator current={3} total={STEPS} />
                 <span className="text-xs font-heading" style={{ color: 'var(--color-text-muted)' }}>4 of {STEPS}</span>
               </div>
               <h2 className="font-heading text-2xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Daily habits</h2>

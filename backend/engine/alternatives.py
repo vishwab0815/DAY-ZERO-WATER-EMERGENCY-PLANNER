@@ -41,8 +41,14 @@ def tanker_delivery_hours(crisis_day: int) -> float:
         return 24.0
 
 
-def get_alternatives(city_id: str, crisis_day: int = 0, household: HouseholdProfile = None) -> list[dict]:
-    city = get_city_data(city_id)
+def get_alternatives(
+    city_id: str,
+    crisis_day: int = 0,
+    household: HouseholdProfile = None,
+    city_data: dict | None = None,
+) -> list[dict]:
+    """city_data can be passed directly to support dynamic cities not in cities.json."""
+    city = city_data or get_city_data(city_id)
     if not city:
         return []
 

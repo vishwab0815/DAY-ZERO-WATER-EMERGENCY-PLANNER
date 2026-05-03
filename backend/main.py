@@ -37,7 +37,7 @@ _households: dict[str, dict] = {}
 
 OPEN_METEO_WEATHER  = "https://api.open-meteo.com/v1/forecast"
 OPEN_METEO_GEOCODE  = "https://geocoding-api.open-meteo.com/v1/search"
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent"
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 
 # ─── Open-Meteo helpers ───────────────────────────────────────────────────────
@@ -336,7 +336,7 @@ def quick_simulate(profile: HouseholdProfile):
         "daily_consumption": daily_normal,
         "total_storage": initial_total,
         "survival_floor": get_survival_floor(profile, float(city["monthly_temp"][date.today().month - 1])),
-        "alternatives": get_alternatives(profile.city_id, 0, profile),
+        "alternatives": get_alternatives(profile.city_id, 0, profile, city_data=city),
         "city": city,
         "live_temp": city.get("live_temp"),
         "forecast_7d": city.get("forecast_7d", []),
@@ -578,6 +578,30 @@ def get_preparedness(household_id: str):
         "score": score, "days_supply": round(days_supply, 1), "gaps": gaps,
         "daily_consumption": round(daily_normal, 1), "total_storage": initial_total, "label": label,
     }
+
+
+# ─── Report Generator ─────────────────────────────────────────────────────────
+
+@app.get("/api/report")
+def download_report():
+    """Generate and return the project PDF report."""
+    try:
+        import sys, importlib.util
+        report_path = os.path.join(os.path.dirname(__file__), "..", "generate_report.py")
+        report_path = os.path.abspath(report_path)
+        spec = importlib.util.spec_from_file_location("generate_report", report_path)
+        mod  = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        pdf_path = mod.generate()
+        return FileResponse(
+            pdf_path,
+            media_type="application/pdf",
+            filename="Day_Zero_WEP_Report.pdf",
+        )
+    except ImportError:
+        raise HTTPException(500, "reportlab not installed. Run: pip install reportlab")
+    except Exception as e:
+        raise HTTPException(500, f"Report generation failed: {str(e)}")
 
 
 # ─── Static files (React build) ───────────────────────────────────────────────
