@@ -140,8 +140,8 @@ def calculate_daily_consumption(
     vessel_per_meal = 2.5 + (n * 0.5)
     vessel_total = vessel_per_meal * 3 * mult["vessels"]
 
-    # Other: floor cleaning, misc
-    other = max(0, 2.0 * mult.get("cooking", 0.5))
+    # Other: floor cleaning, misc (uses dedicated key if present, falls back to vessels)
+    other = max(0, 2.0 * mult.get("other", mult.get("vessels", 0.5)))
 
     total = total_drinking + cooking + toilet_total + bathing_total + handwash_total + laundry_total + vessel_total + other
 

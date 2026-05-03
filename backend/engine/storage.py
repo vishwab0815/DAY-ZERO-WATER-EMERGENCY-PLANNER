@@ -96,35 +96,35 @@ def apply_daily_consumption(
 
     # Deduct utility-quality or better for utility needs
     utility_remaining = utility_need
-    for s in storages:
+    for i, s in enumerate(storages):
         if utility_remaining <= 0:
             break
         quality = get_quality(s.type, s.days_since_filled)
         if quality in ["potable", "utility_only"]:
             deduct = min(s.liters, utility_remaining)
-            s = s.model_copy(update={"liters": s.liters - deduct})
+            storages[i] = s.model_copy(update={"liters": s.liters - deduct})
             utility_remaining -= deduct
 
     # Deduct potable for drinking needs
     potable_remaining = potable_need
-    for s in storages:
+    for i, s in enumerate(storages):
         if potable_remaining <= 0:
             break
         quality = get_quality(s.type, s.days_since_filled)
         if quality == "potable":
             deduct = min(s.liters, potable_remaining)
-            s = s.model_copy(update={"liters": s.liters - deduct})
+            storages[i] = s.model_copy(update={"liters": s.liters - deduct})
             potable_remaining -= deduct
 
     # If potable deficit, try utility water (risky but last resort)
     if potable_remaining > 0:
-        for s in storages:
+        for i, s in enumerate(storages):
             if potable_remaining <= 0:
                 break
             quality = get_quality(s.type, s.days_since_filled)
             if quality == "utility_only" and s.liters > 0:
                 deduct = min(s.liters, potable_remaining)
-                s = s.model_copy(update={"liters": s.liters - deduct})
+                storages[i] = s.model_copy(update={"liters": s.liters - deduct})
                 potable_remaining -= deduct
 
     deficit = max(0, potable_remaining + utility_remaining)

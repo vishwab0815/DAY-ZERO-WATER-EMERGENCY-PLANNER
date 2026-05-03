@@ -96,7 +96,8 @@ def hygiene_score(
     # Progressive decay for sustained crisis
     decay = min(20, days_in_crisis * 1.5)
 
-    return round(max(0.0, raw - decay), 1)
+    # Normalize to 0–100 scale (raw max is 90)
+    return round(max(0.0, min(100.0, (raw - decay) / 90.0 * 100)), 1)
 
 
 def illness_risk(
@@ -133,13 +134,16 @@ def illness_risk(
 
 
 def get_crisis_level(storage_pct: float, health_risk: float) -> str:
+    # Both conditions must be safe to report "safe"
     if storage_pct > 60 and health_risk < 0.1:
         return "safe"
-    elif storage_pct > 40 or health_risk < 0.15:
+    # Both must be moderate — high health risk escalates past watch
+    elif storage_pct > 40 and health_risk < 0.3:
         return "watch"
-    elif storage_pct > 20 or health_risk < 0.35:
+    # Either low storage OR high health risk triggers warning
+    elif storage_pct > 20 or health_risk < 0.5:
         return "warning"
-    elif storage_pct > 5 or health_risk < 0.6:
+    elif storage_pct > 5 or health_risk < 0.7:
         return "critical"
     else:
         return "zero"

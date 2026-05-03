@@ -35,7 +35,7 @@ def run_monte_carlo(
     ratio = needs / (s0 * evap + needs)
     # ratio < 1 always → ln(ratio) < 0, ln(r) < 0 → d positive
     days_float = np.log(ratio) / np.log(r)
-    days_arr = np.clip(np.ceil(days_float).astype(int), 1, 120)
+    days_arr = np.clip(np.ceil(days_float).astype(int), 1, 365)
 
     return {
         "p5":    round(float(np.percentile(days_arr, 5)), 1),
