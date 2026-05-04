@@ -30,14 +30,11 @@ function useReveal(targetFill: number, targetDays: number, targetScore: number) 
 
   useMotionValueEvent(fillSpring, 'change', (v) => setDisplayFill(Math.max(0, v)))
 
-  const [statsVisible, setStatsVisible] = useState(false)
-
   useEffect(() => {
     if (hasRevealed.current) return
     hasRevealed.current = true
     const t1 = setTimeout(() => { fillMV.set(targetFill); daysSpring.set(targetDays); scoreMV.set(targetScore) }, 250)
-    const t2 = setTimeout(() => setStatsVisible(true), 600)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
+    return () => clearTimeout(t1)
   }, [])
 
   useEffect(() => {
@@ -45,7 +42,7 @@ function useReveal(targetFill: number, targetDays: number, targetScore: number) 
     fillMV.set(targetFill)
   }, [targetFill])
 
-  return { displayFill, daysSpring, scoreSpring, statsVisible }
+  return { displayFill, daysSpring, scoreSpring }
 }
 
 // ── DaysRemainingCard ─────────────────────────────────────────────────────────
@@ -381,47 +378,101 @@ function AIInsights() {
 
 // ── Report Download Button ────────────────────────────────────────────────────
 function ReportButton() {
+  const { simulation, crisisLevel, currentDayState, currentDay, household } = useStore()
   const [loading, setLoading] = useState(false)
+  const [errMsg, setErrMsg]   = useState<string | null>(null)
 
   const handleDownload = async () => {
-    setLoading(true)
+    if (!simulation || !currentDayState) return
+    setLoading(true); setErrMsg(null)
     try {
-      const resp = await fetch('http://localhost:8000/api/report')
-      if (!resp.ok) throw new Error('Report generation failed')
+      const base    = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const members = household?.members?.reduce((s, m) => s + m.count, 0) ?? 2
+      const sim     = simulation as any
+
+      const payload = {
+        city:                sim.city?.name ?? 'Unknown',
+        crisis_level:        crisisLevel,
+        days_remaining:      simulation.days.length - currentDay,
+        storage_pct:         currentDayState.storage_pct,
+        total_storage:       simulation.total_storage,
+        daily_consumption:   simulation.daily_consumption,
+        prep_score:          simulation.preparedness_score,
+        survival_floor:      sim.survival_floor ?? 0,
+        live_temp:           sim.live_temp ?? null,
+        forecast_7d:         sim.forecast_7d ?? [],
+        rationing_level:     currentDayState.rationing_level,
+        members,
+        member_breakdown:    household?.members ?? [],
+        mc:                  currentDayState.monte_carlo ?? null,
+        health:              currentDayState.health,
+        consumption:         currentDayState.consumption,
+        strategy_comparison: simulation.strategy_comparison,
+        alternatives:        simulation.alternatives ?? [],
+      }
+
+      const resp = await fetch(`${base}/api/report/simulation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!resp.ok) {
+        const detail = await resp.text()
+        throw new Error(detail || `HTTP ${resp.status}`)
+      }
       const blob = await resp.blob()
       const url  = URL.createObjectURL(blob)
       const a    = document.createElement('a')
-      a.href     = url
-      a.download = 'Day_Zero_WEP_Report.pdf'
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch (e) {
-      console.error('Report download failed:', e)
-    } finally {
-      setLoading(false)
-    }
+      a.href = url; a.download = 'Water_Crisis_Report.pdf'
+      document.body.appendChild(a); a.click()
+      document.body.removeChild(a); URL.revokeObjectURL(url)
+    } catch (e: any) {
+      const msg = e?.message ?? 'Unknown error'
+      console.error('Report failed:', msg)
+      setErrMsg(msg)
+      setTimeout(() => setErrMsg(null), 8000)
+    } finally { setLoading(false) }
   }
 
+  const canGenerate = !!simulation && !!currentDayState
+  const isError = !!errMsg
+
   return (
-    <motion.button
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={handleDownload}
-      disabled={loading}
-      title="Download PDF Report"
-      className="px-3 py-2 rounded-xl text-xs font-heading font-semibold tracking-wide flex items-center gap-1.5 transition-all"
-      style={{
-        background: 'rgba(168,85,247,0.12)',
-        color: loading ? 'var(--color-text-muted)' : '#a855f7',
-        border: '1px solid rgba(168,85,247,0.25)',
-        cursor: loading ? 'not-allowed' : 'pointer',
-      }}
-    >
-      {loading
-        ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>⟳</motion.span>
-        : '↓'}
-      {loading ? 'Generating…' : 'PDF Report'}
-    </motion.button>
+    <div style={{ position: 'relative' }}>
+      <motion.button
+        whileHover={canGenerate ? { scale: 1.03 } : {}}
+        whileTap={canGenerate ? { scale: 0.97 } : {}}
+        onClick={handleDownload}
+        disabled={!canGenerate || loading}
+        title={canGenerate ? 'Download Situation Report PDF' : 'Run simulation first'}
+        className="px-3 py-2 rounded-xl text-xs font-heading font-semibold tracking-wide flex items-center gap-1.5"
+        style={{
+          background: isError ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.1)',
+          color: !canGenerate ? 'var(--color-text-muted)' : isError ? '#ef4444' : loading ? 'var(--color-text-muted)' : '#10b981',
+          border: `1px solid ${isError ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.25)'}`,
+          cursor: canGenerate && !loading ? 'pointer' : 'not-allowed',
+          transition: 'all 0.2s',
+        }}
+      >
+        {loading
+          ? <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>⟳</motion.span>
+          : isError ? '✕' : '↓'}
+        {loading ? 'Generating…' : isError ? 'Error' : 'Situation Report'}
+      </motion.button>
+      {errMsg && (
+        <div style={{
+          position: 'absolute', bottom: '110%', right: 0, zIndex: 9999,
+          background: '#1f2937', border: '1px solid rgba(239,68,68,0.4)',
+          borderRadius: 8, padding: '8px 12px', width: 280,
+          fontSize: 11, color: '#fca5a5', lineHeight: 1.5,
+          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.6)',
+        }}>
+          <div style={{ fontWeight: 700, color: '#ef4444', marginBottom: 4 }}>Report Error</div>
+          {errMsg}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -433,7 +484,7 @@ export function Dashboard() {
   const daysLeft = simulation ? simulation.days.length - currentDay : 0
   const score = simulation?.preparedness_score ?? 0
 
-  const { displayFill, daysSpring, scoreSpring, statsVisible } = useReveal(storagePercent, daysLeft, score)
+  const { displayFill, daysSpring, scoreSpring } = useReveal(storagePercent, daysLeft, score)
 
   const crisisColor = CRISIS_COLORS[crisisLevel] ?? '#00c4ae'
   const containers = currentDayState?.containers ?? []
@@ -555,36 +606,35 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Right panel */}
-        <AnimatePresence>
-          {statsVisible && (
+        {/* Right panel — always rendered, individual items fade in */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="flex flex-col gap-4 p-4 overflow-y-auto"
+          style={{
+            borderLeft: '1px solid rgba(61,45,24,0.3)',
+            minHeight: 0,            /* lets overflow-y-auto work in flex/grid */
+          }}
+        >
+          <StorageBreakdown containers={containers} totalInitial={totalInitial} />
+          {consumption && (
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex flex-col gap-4 p-4 overflow-y-auto"
-              style={{ borderLeft: '1px solid rgba(61,45,24,0.3)' }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
+              className="glass-panel p-4"
             >
-              <StorageBreakdown containers={containers} totalInitial={totalInitial} />
-              {consumption && (
-                <motion.div
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-                  className="glass-panel p-4"
-                >
-                  <ConsumptionDonut breakdown={consumption as any} />
-                  <div className="mt-3 pt-3 border-t text-xs flex justify-between"
-                    style={{ borderColor: 'rgba(61,45,24,0.4)' }}>
-                    <span style={{ color: 'var(--color-text-muted)' }}>Total today</span>
-                    <AnimatedNumber value={consumption.total} decimals={1} suffix="L"
-                      style={{ color: crisisColor, fontFamily: 'var(--font-mono)' }} />
-                  </div>
-                </motion.div>
-              )}
-              <StrategyComparison />
-              <AIInsights />
+              <ConsumptionDonut breakdown={consumption as any} />
+              <div className="mt-3 pt-3 border-t text-xs flex justify-between"
+                style={{ borderColor: 'rgba(61,45,24,0.4)' }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Total today</span>
+                <AnimatedNumber value={consumption.total} decimals={1} suffix="L"
+                  style={{ color: crisisColor, fontFamily: 'var(--font-mono)' }} />
+              </div>
             </motion.div>
           )}
-        </AnimatePresence>
+          <StrategyComparison />
+          <AIInsights />
+        </motion.div>
       </div>
     </div>
   )

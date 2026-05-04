@@ -13,7 +13,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from models.household import HouseholdProfile, StorageUnit
 from models.simulation import SimulationRequest, SimulationResult, RationingLevel
@@ -509,6 +509,42 @@ Rules:
     return {"reply": text, "grounded": grounded}
 
 
+# ─── Simulation PDF Report ───────────────────────────────────────────────────
+
+@app.post("/api/report/simulation")
+async def simulation_report(payload: dict):
+    """Generate a personalized water crisis assessment PDF from live simulation data."""
+    try:
+        from report_simulation import generate_simulation_pdf
+        pdf_bytes = generate_simulation_pdf(payload)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=Water_Crisis_Report.pdf"},
+        )
+    except ImportError:
+        raise HTTPException(500, "reportlab not installed. Run: pip install reportlab")
+    except Exception as e:
+        raise HTTPException(500, f"Report generation failed: {str(e)}")
+
+
+# ─── Static PDF Report download ───────────────────────────────────────────────
+
+@app.get("/api/report")
+def serve_report():
+    """Serve the pre-generated PDF report."""
+    pdf_path = os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Day_Zero_WEP_Report.pdf")
+    )
+    if not os.path.exists(pdf_path):
+        raise HTTPException(404, "Report not found. Run: python generate_report.py")
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename="Day_Zero_WEP_Report.pdf",
+    )
+
+
 # ─── AI health test endpoint ──────────────────────────────────────────────────
 
 @app.get("/api/ai/test")
@@ -580,28 +616,6 @@ def get_preparedness(household_id: str):
     }
 
 
-# ─── Report Generator ─────────────────────────────────────────────────────────
-
-@app.get("/api/report")
-def download_report():
-    """Generate and return the project PDF report."""
-    try:
-        import sys, importlib.util
-        report_path = os.path.join(os.path.dirname(__file__), "..", "generate_report.py")
-        report_path = os.path.abspath(report_path)
-        spec = importlib.util.spec_from_file_location("generate_report", report_path)
-        mod  = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        pdf_path = mod.generate()
-        return FileResponse(
-            pdf_path,
-            media_type="application/pdf",
-            filename="Day_Zero_WEP_Report.pdf",
-        )
-    except ImportError:
-        raise HTTPException(500, "reportlab not installed. Run: pip install reportlab")
-    except Exception as e:
-        raise HTTPException(500, f"Report generation failed: {str(e)}")
 
 
 # ─── Static files (React build) ───────────────────────────────────────────────
